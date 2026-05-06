@@ -4,7 +4,6 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from llm_server import get_llm_server, LLMServer
 
-
 @dataclass
 class InputMessage:
     id: str
@@ -12,7 +11,6 @@ class InputMessage:
     text: str
     source: str
     created_at: str
-
 
 @dataclass
 class SarcasmOutput:
@@ -22,7 +20,6 @@ class SarcasmOutput:
     revised_intensity: int
     confidence: float
     reason: str
-
 
 class SarcasmAgent:
 
@@ -52,13 +49,13 @@ class SarcasmAgent:
 
     SYSTEM_PROMPT = """你是一个反讽识别专家。请严格按照JSON格式输出分析结果，不要输出markdown代码块，不要包含额外解释。
 
-输出字段说明：
-- is_sarcasm: 布尔值，是否反讽
-- surface_emotion: 表层情绪（句子字面表达的情绪），从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
-- true_emotion: 真实情绪（实际传达的情绪），从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
-- revised_intensity: 修正后的情绪强度，0-100的整数
-- confidence: 置信度，0-1之间的小数
-- reason: 一句话说明判断依据，不超过50字"""
+    输出字段说明：
+    - is_sarcasm: 布尔值，是否反讽
+    - surface_emotion: 表层情绪（句子字面表达的情绪），从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
+    - true_emotion: 真实情绪（实际传达的情绪），从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
+    - revised_intensity: 修正后的情绪强度，0-100的整数
+    - confidence: 置信度，0-1之间的小数
+    - reason: 一句话说明判断依据，不超过50字"""
 
     def __init__(self, llm: Optional[LLMServer] = None):
         self.llm = llm or get_llm_server()
@@ -79,9 +76,9 @@ class SarcasmAgent:
     def _call_llm(self, text: str, rule_hints: Dict) -> Dict[str, Any]:
         prompt = f"""句子："{text}"
 
-规则线索：{json.dumps(rule_hints, ensure_ascii=False)}
+        规则线索：{json.dumps(rule_hints, ensure_ascii=False)}
 
-请判断该句子是否使用了反讽修辞，并输出JSON格式的分析结果。"""
+        请判断该句子是否使用了反讽修辞，并输出JSON格式的分析结果。"""
         messages = [
             {"role": "system", "content": self.SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
