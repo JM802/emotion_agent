@@ -4,7 +4,6 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from llm_server import get_llm_server, LLMServer
 
-
 @dataclass
 class InputMessage:
     id: str
@@ -13,7 +12,6 @@ class InputMessage:
     source: str
     created_at: str
 
-
 @dataclass
 class MixOutput:
     is_mixed: bool
@@ -21,9 +19,8 @@ class MixOutput:
     secondary_emotion: Optional[str]
     mix_ratio: Dict[str, float]
     revised_intensity: int
-    confidence: float
+    mix_confidence: float
     reason: str
-
 
 class MixAgent:
 
@@ -31,7 +28,7 @@ class MixAgent:
     POSITIVE_WORDS = {
         "太好了", "真棒", "开心", "高兴", "幸福", "兴奋", "激动",
         "满意", "期待", "喜欢", "爱", "感动", "庆幸", "幸运",
-        "不错", "完美", "精彩", "优秀", "厉害", "爽", "棒", "轻松",
+        "不错", "完美", "精彩", "优秀", "厉害", "爽", "nice", "棒","真不错", "好极了", "可以", "感恩", "谢谢你", "多谢"
     }
 
     # 负向词
@@ -39,13 +36,13 @@ class MixAgent:
         "难过", "伤心", "痛苦", "焦虑", "烦躁", "愤怒", "生气",
         "失望", "无奈", "崩溃", "累", "疲惫", "郁闷", "压抑",
         "讨厌", "恨", "烦", "惨", "糟糕", "烂", "难受", "失落",
-        "空虚", "空", "堵", "慌",
+        "空虚", "空", "堵", "慌"
     }
 
     # 转折词
     TRANSITION_WORDS = {
         "但是", "可是", "不过", "然而", "虽然", "只是",
-        "但", "却", "却也", "也挺", "但还是", "就是",
+        "但", "却", "却也", "也挺", "但还是", "就是"
     }
 
     # 低能量/压抑表达模式
@@ -76,7 +73,7 @@ class MixAgent:
 - secondary_emotion: 次情绪，可为null
 - mix_ratio: 主次情绪的比例字典，如{"疲惫": 0.6, "开心": 0.4}
 - revised_intensity: 情绪强度，0-100的整数
-- confidence: 置信度，0-1之间的小数
+- mix_confidence: 混合情绪识别的置信度，0-1之间的小数
 - reason: 一句话说明判断依据，不超过50字"""
 
     def __init__(self, llm: Optional[LLMServer] = None):
@@ -104,9 +101,9 @@ class MixAgent:
     def _call_llm(self, text: str, rule_hints: Dict) -> Dict[str, Any]:
         prompt = f"""句子："{text}"
 
-规则线索：{json.dumps(rule_hints, ensure_ascii=False)}
+            规则线索：{json.dumps(rule_hints, ensure_ascii=False)}
 
-请判断该句子是否包含混合或复杂情绪，并输出JSON格式的分析结果。"""
+        请判断该句子是否包含混合或复杂情绪，并输出JSON格式的分析结果。"""
         messages = [
             {"role": "system", "content": self.SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
@@ -131,6 +128,6 @@ class MixAgent:
             "secondary_emotion": llm_result.get("secondary_emotion"),
             "mix_ratio": llm_result.get("mix_ratio", {}),
             "revised_intensity": llm_result.get("revised_intensity", 50),
-            "confidence": llm_result.get("confidence", 0.5),
+            "mix_confidence": llm_result.get("mix_confidence", 0.5),
             "reason": llm_result.get("reason", ""),
         }

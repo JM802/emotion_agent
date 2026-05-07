@@ -3,7 +3,7 @@ import re
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from llm_server import get_llm_server, LLMServer
-
+import config
 
 @dataclass
 class JudgeOutput:
@@ -18,23 +18,25 @@ class JudgeOutput:
 
 class JudgeAgent:
 
-    CONFIDENCE_THRESHOLD = 0.6
+    CONFIDENCE_THRESHOLD = config.CONFIDENCE_THRESHOLD
 
     SYSTEM_PROMPT = """你是一个情绪融合专家。请严格按照JSON格式输出分析结果，不要输出markdown代码块，不要包含额外解释。
 
-输出字段说明：
-- final_emotion: 最终情绪，从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
-- secondary_emotion: 次情绪，可为null
-- final_intensity: 最终强度，0-100的整数
-- final_confidence: 最终置信度，0-1之间的小数
-- is_sarcasm: 布尔值，是否反讽
-- is_mixed: 布尔值，是否混合情绪
-- reason: 一段话说明最终判断依据，不超过100字"""
+    输出字段说明：
+    - final_emotion: 最终情绪，从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
+    - secondary_emotion: 次情绪，可为null
+    - final_intensity: 最终强度，0-100的整数
+    - final_confidence: 最终置信度，0-1之间的小数
+    - is_sarcasm: 布尔值，是否反讽
+    - is_mixed: 布尔值，是否混合情绪
+    - reason: 一段话说明最终判断依据，不超过100字"""
 
     def __init__(self, llm: Optional[LLMServer] = None):
         self.llm = llm or get_llm_server()
 
-    def _merge(self, ctx: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge(self, ctx: Dict[str, Any],
+               sarcasm_result: Optional[Dict[str, Any]] = None,
+               mix_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """规则融合：根据 sample_type 和置信度决定最终值"""
         result = {
             "is_sarcasm": False,
@@ -51,15 +53,15 @@ class JudgeAgent:
                 "final_confidence": ctx["emotion_confidence"],
             })
 
-        elif sample_type == "sarcasm_suspected":
-            is_sarcasm = ctx.get("is_sarcasm", False)
-            sarcasm_conf = ctx.get("sarcasm_confidence", 0)
+        elif sample_type == "sarcasm_suspected" and sarcasm_result:
+            is_sarcasm = sarcasm_result.get("is_sarcasm", False)
+            sarcasm_conf = sarcasm_result.get("sarcasm_confidence", 0)
 
             if is_sarcasm and sarcasm_conf >= self.CONFIDENCE_THRESHOLD:
                 result.update({
                     "is_sarcasm": True,
-                    "final_emotion": ctx.get("true_emotion", ctx["emotion"]),
-                    "final_intensity": ctx.get("revised_intensity", ctx["emotion_intensity"]),
+                    "final_emotion": sarcasm_result.get("true_emotion", ctx["emotion"]),
+                    "final_intensity": sarcasm_result.get("revised_intensity", ctx["emotion_intensity"]),
                     "final_confidence": max(sarcasm_conf, ctx["emotion_confidence"]),
                 })
             else:
@@ -70,16 +72,16 @@ class JudgeAgent:
                     "final_confidence": round(ctx["emotion_confidence"] * 0.8, 2),
                 })
 
-        elif sample_type == "mix":
-            is_mixed = ctx.get("is_mixed", False)
-            mix_conf = ctx.get("mix_confidence", 0)
+        elif sample_type == "mix" and mix_result:
+            is_mixed = mix_result.get("is_mixed", False)
+            mix_conf = mix_result.get("mix_confidence", 0)
 
             if is_mixed and mix_conf >= self.CONFIDENCE_THRESHOLD:
                 result.update({
                     "is_mixed": True,
-                    "final_emotion": ctx.get("primary_emotion", ctx["emotion"]),
-                    "secondary_emotion": ctx.get("secondary_emotion"),
-                    "final_intensity": ctx.get("revised_intensity", ctx["emotion_intensity"]),
+                    "final_emotion": mix_result.get("primary_emotion", ctx["emotion"]),
+                    "secondary_emotion": mix_result.get("secondary_emotion"),
+                    "final_intensity": mix_result.get("revised_intensity", ctx["emotion_intensity"]),
                     "final_confidence": max(mix_conf, ctx["emotion_confidence"]),
                 })
             else:
@@ -90,26 +92,35 @@ class JudgeAgent:
                     "final_confidence": round(ctx["emotion_confidence"] * 0.8, 2),
                 })
 
+        else:
+            result.update({
+                "final_emotion": ctx["emotion"],
+                "final_intensity": ctx["emotion_intensity"],
+                "final_confidence": round(ctx["emotion_confidence"] * 0.8, 2),
+            })
+
         return result
 
-    def _call_llm(self, ctx: Dict[str, Any], rule_result: Dict[str, Any]) -> Dict[str, Any]:
+    def _call_llm(self, ctx: Dict[str, Any], rule_result: Dict[str, Any],
+                  sarcasm_result: Optional[Dict[str, Any]] = None,
+                  mix_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """LLM 验证融合结果并生成 reason"""
         sarcasm_section = ""
-        if ctx.get("is_sarcasm") is not None:
+        if sarcasm_result:
             sarcasm_section = (
-                f"反讽分析：is_sarcasm={ctx['is_sarcasm']}，"
-                f"表层={ctx.get('surface_emotion', '?')}，"
-                f"真实={ctx.get('true_emotion', '?')} "
-                f"（置信度：{ctx.get('sarcasm_confidence', '?')}）"
+                f"反讽分析：is_sarcasm={sarcasm_result.get('is_sarcasm', False)}，"
+                f"表层={sarcasm_result.get('surface_emotion', '?')}，"
+                f"真实={sarcasm_result.get('true_emotion', '?')} "
+                f"（置信度：{sarcasm_result.get('sarcasm_confidence', '?')}）"
             )
 
         mix_section = ""
-        if ctx.get("is_mixed") is not None:
+        if mix_result:
             mix_section = (
-                f"混合分析：is_mixed={ctx['is_mixed']}，"
-                f"主情绪={ctx.get('primary_emotion', '?')}，"
-                f"次情绪={ctx.get('secondary_emotion', '?')} "
-                f"（置信度：{ctx.get('mix_confidence', '?')}）"
+                f"混合分析：is_mixed={mix_result.get('is_mixed', False)}，"
+                f"主情绪={mix_result.get('primary_emotion', '?')}，"
+                f"次情绪={mix_result.get('secondary_emotion', '?')} "
+                f"（置信度：{mix_result.get('mix_confidence', '?')}）"
             )
 
         prompt = (
@@ -150,29 +161,11 @@ class JudgeAgent:
             "router_reason": router_result.get("routing_reason", ""),
             "emotion": emotion_result.get("emotion", "中性"),
             "emotion_intensity": emotion_result.get("intensity", 50),
-            "emotion_confidence": emotion_result.get("confidence", 0.5),
+            "emotion_confidence": emotion_result.get("emotion_confidence", 0.5),
         }
 
-        if sarcasm_result:
-            ctx.update({
-                "is_sarcasm": sarcasm_result.get("is_sarcasm", False),
-                "surface_emotion": sarcasm_result.get("surface_emotion"),
-                "true_emotion": sarcasm_result.get("true_emotion"),
-                "revised_intensity": sarcasm_result.get("revised_intensity"),
-                "sarcasm_confidence": sarcasm_result.get("confidence", 0),
-            })
-
-        if mix_result:
-            ctx.update({
-                "is_mixed": mix_result.get("is_mixed", False),
-                "primary_emotion": mix_result.get("primary_emotion"),
-                "secondary_emotion": mix_result.get("secondary_emotion"),
-                "mix_ratio": mix_result.get("mix_ratio"),
-                "mix_confidence": mix_result.get("confidence", 0),
-            })
-
-        rule_result = self._merge(ctx)
-        llm_result = self._call_llm(ctx, rule_result)
+        rule_result = self._merge(ctx, sarcasm_result, mix_result)
+        llm_result = self._call_llm(ctx, rule_result, sarcasm_result, mix_result)
 
         return {
             "final_emotion": llm_result.get("final_emotion", rule_result["final_emotion"]),

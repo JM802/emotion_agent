@@ -21,7 +21,7 @@ class EmotionOutput:
     contrast_words: List[str]
     emotion: str
     intensity: int
-    confidence: float
+    emotion_confidence: float
     reason: str
 
 
@@ -59,7 +59,7 @@ class EmotionAgent:
     - contrast_words: 转折词列表（如：但是、不过）
     - emotion: 主情绪类别，只能从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
     - intensity: 情绪强度，0-100的整数
-    - confidence: 置信度，0-1之间的小数
+    - emotion_confidence: 基础情绪识别的置信度，0-1之间的小数
     - reason: 一句话说明判断依据，不超过50字"""
 
     def __init__(self, llm: Optional[LLMServer] = None):
@@ -127,6 +127,6 @@ class EmotionAgent:
             "contrast_words": llm_result.get("contrast_words", rule_info["contrast_words"]),
             "emotion": llm_result.get("emotion", rule_info["predicted_emotion"]),
             "intensity": llm_result.get("intensity", 50),
-            "confidence": llm_result.get("confidence", 0.5),
+            "emotion_confidence": llm_result.get("emotion_confidence", 0.5),
             "reason": llm_result.get("reason", ""),
         }

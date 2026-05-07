@@ -85,7 +85,7 @@
 * `contrast_words`
 * `emotion`
 * `intensity`
-* `confidence`
+* `sarcasm_confidence`
 * `reason`
 
 这样既保留了结构化信息，也不增加调用链长度。
@@ -231,7 +231,7 @@ Router Agent 只做两件事：
   "contrast_words": [],
   "emotion": "开心",
   "intensity": 62,
-  "confidence": 0.61,
+  "emotion_confidence": 0.61,
   "reason": "文本表面存在明显正向表达“太好了”，情绪方向初步判为正向"
 }
 ```
@@ -272,8 +272,8 @@ Router Agent 只做两件事：
   "surface_emotion": "开心",
   "true_emotion": "厌烦",
   "revised_intensity": 74,
-  "confidence": 0.85,
-  "reason": "表面正向词“太好了”与负面工作场景“周末继续改需求”形成明显反讽，真实情绪偏厌烦"
+  “sarcasm_confidence”: 0.85,
+  “reason”: “表面正向词”太好了”与负面工作场景”周末继续改需求”形成明显反讽，真实情绪偏厌烦”
 }
 ```
 
@@ -346,8 +346,8 @@ Mix Agent 用来处理单标签说不清楚的情况。
     "开心": 0.42
   },
   "revised_intensity": 57,
-  "confidence": 0.79,
-  "reason": "句子存在转折结构“但”，前半句表达正向结果，后半句突出疲惫感，属于混合情绪"
+  “mix_confidence”: 0.79,
+  “reason”: “句子存在转折结构”但”，前半句表达正向结果，后半句突出疲惫感，属于混合情绪”
 }
 ```
 
@@ -543,7 +543,7 @@ Judge Agent
 * `emotion`
 * `secondary_emotion`
 * `intensity`
-* `confidence`
+* `sarcasm_confidence`
 * `is_sarcasm`
 * `is_mixed`
 * `reason`
@@ -578,7 +578,7 @@ Judge Agent
 * `contrast_words`
 * `emotion`
 * `intensity`
-* `confidence`
+* `emotion_confidence`
 * `reason`
 
 ## Sarcasm Agent
@@ -589,7 +589,7 @@ Judge Agent
 * `surface_emotion`
 * `true_emotion`
 * `revised_intensity`
-* `confidence`
+* `sarcasm_confidence`
 * `reason`
 
 ## Mix Agent
@@ -601,7 +601,7 @@ Judge Agent
 * `secondary_emotion`
 * `mix_ratio`
 * `revised_intensity`
-* `confidence`
+* `mix_confidence`
 * `reason`
 
 ## Judge Agent
@@ -659,7 +659,7 @@ Judge Agent
 * `emotion`
 * `secondary_emotion`
 * `intensity`
-* `confidence`
+* `sarcasm_confidence`
 * `is_sarcasm`
 * `is_mixed`
 * `reason`

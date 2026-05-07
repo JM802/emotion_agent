@@ -18,7 +18,7 @@ class SarcasmOutput:
     surface_emotion: str
     true_emotion: str
     revised_intensity: int
-    confidence: float
+    sarcasm_confidence: float
     reason: str
 
 class SarcasmAgent:
@@ -54,7 +54,7 @@ class SarcasmAgent:
     - surface_emotion: 表层情绪（句子字面表达的情绪），从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
     - true_emotion: 真实情绪（实际传达的情绪），从「开心、悲伤、愤怒、焦虑、厌烦、中性」中选择
     - revised_intensity: 修正后的情绪强度，0-100的整数
-    - confidence: 置信度，0-1之间的小数
+    - sarcasm_confidence: 反讽识别的置信度，0-1之间的小数
     - reason: 一句话说明判断依据，不超过50字"""
 
     def __init__(self, llm: Optional[LLMServer] = None):
@@ -102,6 +102,6 @@ class SarcasmAgent:
             "surface_emotion": llm_result.get("surface_emotion", "中性"),
             "true_emotion": llm_result.get("true_emotion", "中性"),
             "revised_intensity": llm_result.get("revised_intensity", 50),
-            "confidence": llm_result.get("confidence", 0.5),
+            "sarcasm_confidence": llm_result.get("sarcasm_confidence", 0.5),
             "reason": llm_result.get("reason", ""),
         }

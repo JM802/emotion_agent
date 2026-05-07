@@ -42,7 +42,8 @@ class RouterAgent:
     NEGATIVE_WORDS = {
         "难过", "伤心", "痛苦", "焦虑", "烦躁", "愤怒", "生气",
         "失望", "无奈", "崩溃", "累", "疲惫", "郁闷", "压抑",
-        "讨厌", "恨", "烦", "惨", "糟糕", "烂", "难受"
+        "讨厌", "恨", "烦", "惨", "糟糕", "烂", "难受", "失落",
+        "空虚", "空", "堵", "慌"
     }
 
     # 典型反讽触发词
@@ -209,58 +210,3 @@ class RouterAgent:
         msg = InputMessage(**input_data)
         result = self._route(msg)
         return result
-
-#测试用例
-if __name__ == "__main__":
-    agent = RouterAgent()
-
-    test_cases = [
-        {
-            "id": "msg_001",
-            "user_id": "u_1001",
-            "text": "太好了，周末又能继续改需求了。",
-            "source": "chat",
-            "created_at": "2026-03-24T14:00:00",
-        },
-        {
-            "id": "msg_002",
-            "user_id": "u_1002",
-            "text": "我今天很开心",
-            "source": "chat",
-            "created_at": "2026-03-24T14:01:00",
-        },
-        {
-            "id": "msg_003",
-            "user_id": "u_1003",
-            "text": "开心是开心，但也挺累",
-            "source": "chat",
-            "created_at": "2026-03-24T14:02:00",
-        },
-        {
-            "id": "msg_004",
-            "user_id": "u_1004",
-            "text": "真棒，需求又改了",
-            "source": "chat",
-            "created_at": "2026-03-24T14:03:00",
-        },
-        {
-            "id": "msg_005",
-            "user_id": "u_1005",
-            "text": "不算难过，就是提不起劲",
-            "source": "chat",
-            "created_at": "2026-03-24T14:04:00",
-        },
-        {
-            "id": "msg_006",
-            "user_id": "u_1006",
-            "text": "我现在特别焦虑",
-            "source": "chat",
-            "created_at": "2026-03-24T14:05:00",
-        },
-    ]
-
-    for case in test_cases:
-        result = agent.process(case)
-        print(f"Input:  {case['text']}")
-        print(f"Output: {json.dumps(result, ensure_ascii=False)}")
-        print("-" * 60)
