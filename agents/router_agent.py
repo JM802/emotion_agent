@@ -3,6 +3,10 @@ import re
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from llm_server import get_llm_server, LLMServer
 
 #定义枚举的类型
@@ -202,9 +206,7 @@ class RouterAgent:
             "need_mix_check": False,
             "routing_reason": reason,
         }
-    
-    
-    
+     
     def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         #处理输入，返回路由决策
         msg = InputMessage(**input_data)

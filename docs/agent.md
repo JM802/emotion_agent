@@ -468,8 +468,7 @@ flowchart TD
   "tokens": ["太好了", "周末", "又", "能", "继续", "改", "需求"],
   "emotion_words": ["太好了"],
   "source": "chat",
-  "created_at": "2026-03-24T14:00:00",
-  "model_version": "prompt-agent-v1.1"
+  "created_at": "2026-03-24T14:00:00"
 }
 ```
 
@@ -490,8 +489,7 @@ flowchart TD
   "tokens": ["开心", "是", "开心", "但", "也", "挺", "累"],
   "emotion_words": ["开心", "累"],
   "source": "chat",
-  "created_at": "2026-03-24T14:05:00",
-  "model_version": "prompt-agent-v1.1"
+  "created_at": "2026-03-24T14:05:00"
 }
 ```
 
@@ -549,7 +547,6 @@ Judge Agent
 * `reason`
 * `tokens`
 * `emotion_words`
-* `model_version`
 * `created_at`
 
 ---

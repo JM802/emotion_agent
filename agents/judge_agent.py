@@ -2,6 +2,10 @@ import json
 import re
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from llm_server import get_llm_server, LLMServer
 import config
 
